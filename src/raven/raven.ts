@@ -377,16 +377,30 @@ class Raven extends TypedEventEmitter<RavenEvents, EventHandlerMap> {
     }
 
     public async sendPublicMessage(channel: Channel, message: string, mentions?: string[], parent?: string) {
-        const root = parent || channel.id;
+        
+        console.log('Raven.sendPublicMessage', channel, message, mentions, parent);
+        
+        let root = parent || channel.id;
         const relay = await this.bgRaven.where(root);
+        root = channel.id;
         const tags = [['e', root, relay, 'root']];
         if (mentions) {
-            mentions.forEach(m => tags.push(['p', m]));
+            mentions.forEach(m => {
+                if(m === 'reply' && parent) {
+                    tags.push(['e', parent, '', m])
+                }
+                // else {
+                //     tags.push(['p', m])
+                // }
+            });
         }
         return this.publish(Kind.ChannelMessage, tags, message);
     }
 
     public async sendDirectMessage(toPubkey: string, message: string, mentions?: string[], parent?: string) {
+        
+        console.log('Raven.sendDirectMessage', toPubkey, message, mentions, parent);
+
         const encrypted = await this.encrypt(toPubkey, message);
         const tags = [['p', toPubkey]];
         if (mentions) {
@@ -458,6 +472,8 @@ class Raven extends TypedEventEmitter<RavenEvents, EventHandlerMap> {
                 const failedRelays: string[] = [];
 
                 const pub = pool.publish(this.writeRelays, event);
+
+                console.log('Publish event', event);
 
                 const closePool = () => {
                     if ([...okRelays, ...failedRelays].length === this.writeRelays.length) {
@@ -763,7 +779,7 @@ class Raven extends TypedEventEmitter<RavenEvents, EventHandlerMap> {
 
     static findNip10MarkerValue(ev: Event, marker: 'reply' | 'root' | 'mention') {
         const eTags = Raven.filterTagValue(ev, 'e');
-        return eTags.find(x => x[3] === marker)?.[1];
+        return eTags.find(x => x[3] == marker)?.[1];
     }
 }
 
