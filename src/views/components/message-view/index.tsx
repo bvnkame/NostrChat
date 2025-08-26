@@ -228,6 +228,7 @@ const MessageView = (props: { message: Message, compactView: boolean, dateFormat
                         },
                     }
                 }} onClick={() => {
+                    console.log('openThread', message);
                     setThreadRoot(message);
                 }}>
                     {uniq(message.children.map(m => m.creator)).slice(0, 4).map(c => {
