@@ -79,7 +79,7 @@ const ThreadChatView = (props: { senderFn: (message: string, mentions: string[])
             })}
         </Box>
         <ChatInput separator={threadRoot.id} senderFn={(message: string, mentions: string[]) => {
-            console.log('ThreadChatView senderFn', message, mentions);
+            // console.log('ThreadChatView senderFn', message, mentions);
             mentions = ['reply', ...mentions];
             return props.senderFn(message, mentions).then(() => {
                 setTimeout(() => {

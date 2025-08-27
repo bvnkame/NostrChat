@@ -637,9 +637,19 @@ class Raven extends TypedEventEmitter<RavenEvents, EventHandlerMap> {
         }
 
         const publicMessages: PublicMessage[] = this.eventQueue.filter(x => x.kind === kinds.ChannelMessage).map(ev => {
-                const root = Raven.findNip10MarkerValue(ev, 'root');
-                const mentions = Raven.filterTagValue(ev, 'p').map(x => x?.[1]).filter(notEmpty);
+                let root = Raven.findNip10MarkerValue(ev, 'root');
+                let mentions = Raven.filterTagValue(ev, 'p').map(x => x?.[1]).filter(notEmpty);
+           
+                const isReplyTo = Raven.filterTagValue(ev, 'e').find(x => x?.[3] === 'reply')?.[1];
+
+                if(isReplyTo) {
+                    mentions = [isReplyTo];
+                    root = isReplyTo;
+                    console.log('Is reply and mentions', mentions);
+                }
+
                 if (!root) return null;
+
                 return ev.content ? {
                     id: ev.id,
                     root,
@@ -650,6 +660,7 @@ class Raven extends TypedEventEmitter<RavenEvents, EventHandlerMap> {
                 } : null;
             }
         ).filter(notEmpty);
+
         if (publicMessages.length > 0) {
             this.emit(RavenEvents.PublicMessage, publicMessages);
         }

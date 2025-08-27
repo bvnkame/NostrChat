@@ -51,8 +51,15 @@ const Invite = (props: { channel: Channel }) => {
                         }}
                     />
 
-                    <p>{JSON.stringify(event)}</p>
-                    <QRCode value={`nostr:${nevent}`} />
+                    {/* <p>{JSON.stringify(event)}</p> */}
+                    <p>QR Code:</p>
+                    <Box sx={{
+                        justifyContent: 'center',
+                        alignContent: 'center',
+                        display: 'flex',
+                    }}>
+                        <QRCode  value={`nostr:${nevent}`} />
+                    </Box>
                 </Box>
             </DialogContent>
         </>

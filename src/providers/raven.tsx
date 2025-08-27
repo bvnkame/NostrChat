@@ -71,7 +71,7 @@ const RavenProvider = (props: { children: React.ReactNode }) => {
         if (!ravenStatus.syncDone) return;
 
         const timer = setTimeout(() => {
-            console.log('Listening channels', channels.map(x => x.id));   
+            // console.log('Listening channels', channels.map(x => x.id));   
             raven?.listen(channels.map(x => x.id), Math.floor((since || Date.now()) / 1000));
             setSince(Date.now());
         }, since === 0 ? 500 : 10000);
