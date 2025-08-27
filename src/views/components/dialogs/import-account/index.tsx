@@ -5,7 +5,6 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import {TextField} from '@mui/material';
 import {nip19} from 'nostr-tools';
-import {DecodeResult} from 'nostr-tools/lib/nip19';
 
 import CloseModal from 'components/close-modal';
 import useModal from 'hooks/use-modal';
@@ -24,7 +23,7 @@ const ImportAccount = (props: { onSuccess: (key: string, type: 'pub' | 'priv') =
 
     const handleSubmit = () => {
         if (userKey.startsWith('nsec') || userKey.startsWith('npub')) {
-            let dec: DecodeResult;
+            let dec: nip19.DecodedResult;
             try {
                 dec = nip19.decode(userKey);
             } catch (e) {
@@ -62,7 +61,7 @@ const ImportAccount = (props: { onSuccess: (key: string, type: 'pub' | 'priv') =
                            inputProps={{
                                autoCorrect: 'off',
                            }}
-                           onKeyPress={(e) => {
+                           onKeyPress={(e : any) => {
                                if (e.key === 'Enter') {
                                    handleSubmit()
                                }

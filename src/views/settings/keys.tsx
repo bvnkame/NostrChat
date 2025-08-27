@@ -66,7 +66,7 @@ const SettingsKeysPage = (_: RouteComponentProps) => {
                             </Box>;
                         }
 
-                        const priv = nip19.nsecEncode(keys.priv);
+                        const priv = nip19.nsecEncode(Uint8Array.from(Buffer.from(keys.priv, 'hex')));
                         return <>
                             <Box sx={{mb: '30px', color: theme.palette.text.secondary, fontSize: '0.8em'}}>
                                 {t('Please make sure you save a copy of your private key.')}

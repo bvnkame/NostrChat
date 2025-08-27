@@ -118,7 +118,7 @@ const ChannelPage = (props: RouteComponentProps) => {
 
     if (!ravenStatus.ready) {
         return <Box sx={{display: 'flex', alignItems: 'center'}}>
-            <CircularProgress size={20} sx={{mr: '8px'}}/> {t('Loading...')}
+            <CircularProgress size={20} sx={{mr: '8px'}}/> {t('Loading... ' + (JSON.stringify(ravenStatus) || ''))}
         </Box>;
     }
 

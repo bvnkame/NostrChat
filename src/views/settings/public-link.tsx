@@ -1,7 +1,8 @@
 import React, {useEffect, useMemo} from 'react';
 import {useAtom} from 'jotai';
 import {RouteComponentProps, useNavigate} from '@reach/router';
-import {nip19} from 'nostr-tools';
+import { nip19 } from 'nostr-tools';
+
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';

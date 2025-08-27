@@ -71,6 +71,7 @@ const RavenProvider = (props: { children: React.ReactNode }) => {
         if (!ravenStatus.syncDone) return;
 
         const timer = setTimeout(() => {
+            console.log('Listening channels', channels.map(x => x.id));   
             raven?.listen(channels.map(x => x.id), Math.floor((since || Date.now()) / 1000));
             setSince(Date.now());
         }, since === 0 ? 500 : 10000);
@@ -168,7 +169,7 @@ const RavenProvider = (props: { children: React.ReactNode }) => {
     // Channel creation handler
     const handleChannelCreation = (data: Channel[]) => {
         logger.info('handleChannelCreation', data);
-        const append = data.filter(x => channels.find(y => y.id === x.id) === undefined);
+        const append = data.filter(x => channels.find((y:any) => y.id === x.id) === undefined);
         setChannels([...channels, ...append]);
     }
 
@@ -184,7 +185,7 @@ const RavenProvider = (props: { children: React.ReactNode }) => {
     // Channel update handler
     const handleChannelUpdate = (data: ChannelUpdate[]) => {
         logger.info('handleChannelUpdate', data);
-        const append = data.filter(x => channelUpdates.find(y => y.id === x.id) === undefined);
+        const append = data.filter(x => channelUpdates.find((y : any) => y.id === x.id) === undefined);
         setChannelUpdates([...channelUpdates, ...append]);
     }
 
@@ -328,18 +329,17 @@ const RavenProvider = (props: { children: React.ReactNode }) => {
     // muteList runtime decryption for nip04 wallet users.
     useEffect(() => {
         if ((keys?.priv === 'nip07' || keys?.priv === 'none') && muteList.encrypted) {
-            let promise;
+            let content: any;
             if (keys.priv === 'none' && tempPriv) {
-                promise = nip04.decrypt(tempPriv, keys.pub, muteList.encrypted);
+                content = nip04.decrypt(tempPriv, keys.pub, muteList.encrypted);
             } else if (keys.priv === 'nip07') {
-                promise = window.nostr?.nip04.decrypt(keys.pub, muteList.encrypted);
+                content = window.nostr?.nip04.decrypt(keys.pub, muteList.encrypted);
             }
 
-            promise?.then(e => JSON.parse(e)).then(resp => {
-                setMuteList({
-                    pubkeys: uniq(resp.map((x: any) => x?.[1])),
-                    encrypted: ''
-                })
+            let jsonData =  JSON.parse(content)
+            setMuteList({
+                pubkeys: uniq(jsonData.map((x: any) => x?.[1])),
+                encrypted: ''
             })
         }
     }, [muteList, keys, tempPriv]);
@@ -366,25 +366,24 @@ const RavenProvider = (props: { children: React.ReactNode }) => {
         if ((keys?.priv === 'nip07' || keys?.priv === 'none') && directMessage) {
             const toDecrypt = directMessages.filter(m => m.peer === directMessage).find(x => !x.decrypted);
             if (toDecrypt) {
-                let promise;
+                let content: any;
                 if (keys.priv === 'none' && tempPriv) {
-                    promise = nip04.decrypt(tempPriv, toDecrypt.peer, toDecrypt.content);
+                    content = nip04.decrypt(tempPriv, toDecrypt.peer, toDecrypt.content);
                 } else if (keys.priv === 'nip07') {
-                    promise = window.nostr?.nip04.decrypt(toDecrypt.peer, toDecrypt.content);
+                    content = window.nostr?.nip04.decrypt(toDecrypt.peer, toDecrypt.content);
                 }
 
-                promise?.then(content => {
-                    setDirectMessages(directMessages.map(m => {
-                        if (m.id === toDecrypt.id) {
-                            return {
-                                ...m,
-                                content,
-                                decrypted: true
-                            }
+                // NEED TO FIX THIS
+                setDirectMessages(directMessages.map(m => {
+                    if (m.id === toDecrypt.id) {
+                        return {
+                            ...m,
+                            content,
+                            decrypted: true
                         }
-                        return m;
-                    }));
-                })
+                    }
+                    return m;
+                }));
             }
         }
     }, [directMessages, directMessage, tempPriv, keys]);

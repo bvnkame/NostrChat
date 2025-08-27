@@ -4,7 +4,7 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
-import {nip06, getPublicKey} from 'nostr-tools';
+import {getPublicKey} from 'nostr-tools';
 
 import {InstallNip07Dialog} from 'views/components/dialogs/no-wallet/nip07';
 import ImportAccount from 'views/components/dialogs/import-account';
@@ -19,6 +19,8 @@ import Wallet from 'svg/wallet';
 import {PLATFORM} from 'const';
 import {storeKeys} from 'local-storage';
 import {Keys} from 'types';
+
+import * as nip06 from './nip06';
 
 
 const Login = (props: { onDone: () => void }) => {
@@ -42,7 +44,8 @@ const Login = (props: { onDone: () => void }) => {
     }, [profile]);
 
     const createAccount = () => {
-        const priv = nip06.privateKeyFromSeedWords(nip06.generateSeedWords());
+        const privBytes = nip06.privateKeyFromSeedWords(nip06.generateSeedWords());
+        const priv = Buffer.from(privBytes).toString('hex');
         loginPriv(priv);
         setBackupWarn(true);
     }
@@ -73,7 +76,8 @@ const Login = (props: { onDone: () => void }) => {
     }
 
     const loginPriv = (priv: string) => {
-        const pub = getPublicKey(priv);
+        const privBytes = Uint8Array.from(Buffer.from(priv, 'hex'));
+        const pub = getPublicKey(privBytes);
         proceed({priv, pub});
     }
 

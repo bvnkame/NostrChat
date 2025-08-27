@@ -1,9 +1,9 @@
 import * as Comlink from 'comlink';
-import {Event, Filter, SimplePool, Sub} from 'nostr-tools';
+import {Event, Filter, SimplePool} from 'nostr-tools';
 
 export class BgRaven {
     private seenOn: Record<string, string[]> = {};
-    private subs: Record<string, Sub> = {};
+    private subs: Record<string, any> = {};
     private relays: string[] = [];
     private pool = new SimplePool();
     private poolCreated = Date.now();
@@ -17,7 +17,7 @@ export class BgRaven {
             // renew pool every two minutes
             this.pool.close(this.relays);
 
-            this.pool = new SimplePool();
+            this.pool = new SimplePool({enablePing: false});
             this.poolCreated = Date.now();
         }
 
@@ -27,50 +27,67 @@ export class BgRaven {
     public fetch(filters: Filter[], quitMs: number = 0): Promise<Event[]> {
         return new Promise((resolve) => {
             const pool = this.getPool();
-            const sub = pool.sub(this.relays, filters);
+            
+            const sub = pool.subscribeMany(
+                this.relays, 
+                filters,
+                {
+                    onevent: (event: Event) => {
+                        if(event.kind === 40) {
+                            console.log('BgRaven.fetch got event', event);
+                        }
+
+                        events.push(event);
+                        // const seenSet = pool.seenOn.get(event.id);
+                        // console.log('BgRaven.fetch seenSet', seenSet);
+                        // this.seenOn[event.id] = event.tags.find(t => t[0] === 'relays') ? event.tags.filter(t => t[0] === 'relays').map(t => t[1]) : (seenSet ? Array.from(seenSet).map(relay => relay.url) : []);
+                        // console.log('BgRaven.fetch seen on', this.seenOn[event.id]);
+
+                        this.seenOn[event.id] = this.relays
+
+                        if (quitMs > 0) {
+                            clearTimeout(timer);
+                            timer = setTimeout(quit, quitMs);
+                        }
+                    },
+                    oneose: () => {
+                        if (quitMs === 0) {
+                            sub.close();
+                            resolve(events);
+                        }
+                    }
+                }
+            );
             const events: Event[] = [];
 
             const quit = () => {
-                sub.unsub();
+                sub.close();
                 resolve(events);
             }
-
             let timer: any = quitMs > 0 ? setTimeout(quit, quitMs) : null;
-
-            sub.on('event', (event: Event) => {
-                events.push(event);
-                this.seenOn[event.id] = pool.seenOn(event.id);
-
-                if (quitMs > 0) {
-                    clearTimeout(timer);
-                    timer = setTimeout(quit, quitMs);
-                }
-            });
-
-            if (quitMs === 0) {
-                sub.on('eose', () => {
-                    sub.unsub();
-                    resolve(events);
-                });
-            }
         });
     }
 
     public sub(filters: Filter[], onEvent: (e: Event) => void, unsub: boolean = true) {
         const subId = Math.random().toString().slice(2);
         const pool = this.getPool();
-        const sub = pool.sub(this.relays, filters, {id: subId});
-
-        sub.on('event', (event) => {
-            this.seenOn[event.id] = pool.seenOn(event.id);
-            onEvent(event)
-        });
-
-        sub.on('eose', () => {
-            if (unsub) {
-                this.unsub(subId);
+        var that = this;
+        
+        const sub = pool.subscribeMany(
+            this.relays, 
+            filters, 
+            {
+                onevent(event) {
+                    that.seenOn[event.id] = that.relays;
+                    onEvent(event)
+                },
+                oneose() {
+                    if (unsub) {
+                        that.unsub(subId);
+                    }
+                }
             }
-        });
+        );
 
         this.subs[subId] = sub;
         return subId;
@@ -78,7 +95,7 @@ export class BgRaven {
 
     public unsub(subId: string) {
         if (this.subs[subId]) {
-            this.subs[subId].unsub();
+            this.subs[subId].close();
             delete this.subs[subId];
         }
     }

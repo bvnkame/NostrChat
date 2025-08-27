@@ -154,6 +154,11 @@ const ChatView = (props: { messages: Message[], separator: string, loading?: boo
         mt: 'auto',
         ...styles.scrollY,
     }}>
+        {
+            (messages.length === 0 && !loading) &&
+            <Box sx={{textAlign: 'center', color: 'text.secondary', mt: '20px'}}>{t('No messages yet')}</Box>
+        }
+
         {messages.map((msg, i) => {
             const prevMsg = messages[i - 1];
             const msgDate = formatMessageDate(msg.created);
@@ -175,6 +180,7 @@ const ChatView = (props: { messages: Message[], separator: string, loading?: boo
 
             return <MessageView key={msg.id} message={msg} dateFormat='time' compactView={isCompact}/>;
         })}
+
         {(isDM && keys?.priv === 'none' && !tempPriv) && (
             <Box sx={{
                 textAlign: 'center',

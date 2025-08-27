@@ -12,6 +12,8 @@ import useTranslation from 'hooks/use-translation';
 import IconButton from '@mui/material/IconButton';
 import ContentCopy from 'svg/content-copy';
 import {Channel} from 'types';
+import QRCode from 'react-qr-code';
+import { nip19 } from 'nostr-tools';
 
 
 const Invite = (props: { channel: Channel }) => {
@@ -23,7 +25,13 @@ const Invite = (props: { channel: Channel }) => {
         showModal(null);
     };
 
-    const url = `${window.location.protocol}//${window.location.host}/channel/${channel.id}`;
+    const eventID = channel.id;
+    // Convert to bench 32 event id
+    //
+
+    const event = { id: eventID, kind: 40, relays: ['wss://nostream.breadslice.com', 'wss://relay.damus.io', 'wss://relay1.nostrchat.io'] };
+    const nevent = nip19.neventEncode(event);
+    const url = `${window.location.protocol}//${window.location.host}/channel/${nevent}`;
 
     return (
         <>
@@ -42,6 +50,9 @@ const Invite = (props: { channel: Channel }) => {
                             </InputAdornment>,
                         }}
                     />
+
+                    <p>{JSON.stringify(event)}</p>
+                    <QRCode value={`nostr:${nevent}`} />
                 </Box>
             </DialogContent>
         </>

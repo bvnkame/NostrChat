@@ -8,12 +8,13 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import {useTheme} from '@mui/material/styles';
 import {getPublicKey, nip19} from 'nostr-tools';
-import {DecodeResult} from 'nostr-tools/lib/nip19';
+// import {DecodeResult} from 'nostr-tools/lib/nip19';
 import CloseModal from 'components/close-modal';
 import useModal from 'hooks/use-modal';
 import useTranslation from 'hooks/use-translation';
 import {keysAtom, tempPrivAtom} from 'atoms';
 
+// const {DecodeResult} = nip19;
 
 window.requestPrivateKey = (data: any) => {
     return new Promise((resolve, reject) => {
@@ -43,7 +44,9 @@ const PrivRequiredDialog = (props: { data: any, onSuccess: (key: string) => void
     const theme = useTheme();
     const [keys,] = useAtom(keysAtom);
     const [tempPriv, setTempPriv] = useAtom(tempPrivAtom);
-    const [userKey, setUserKey] = useState(tempPriv ? nip19.nsecEncode(tempPriv) : '');
+    const [userKey, setUserKey] = useState(
+        tempPriv ? nip19.nsecEncode(Uint8Array.from(Buffer.from(tempPriv, 'hex'))) : ''
+    );
     const [isInvalid, setIsInvalid] = useState(false);
 
     const isObject = typeof data === 'object';
@@ -76,7 +79,7 @@ const PrivRequiredDialog = (props: { data: any, onSuccess: (key: string) => void
         }
 
         if (userKey.startsWith('nsec')) {
-            let dec: DecodeResult;
+            let dec: any;
             try {
                 dec = nip19.decode(userKey);
             } catch (e) {
@@ -85,7 +88,7 @@ const PrivRequiredDialog = (props: { data: any, onSuccess: (key: string) => void
             }
 
             const key = dec.data as string;
-            if (dec.type === 'nsec' && keys?.pub === getPublicKey(key)) {
+            if (dec.type === 'nsec' && keys?.pub === getPublicKey(Uint8Array.from(Buffer.from(key, 'hex')))) {
                 onSuccess(key);
                 setTempPriv(key);
                 return;
