@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Box from '@mui/material/Box';
@@ -11,12 +11,35 @@ import useModal from 'hooks/use-modal';
 import useTranslation from 'hooks/use-translation';
 import IconButton from '@mui/material/IconButton';
 import ContentCopy from 'svg/content-copy';
-import {Channel} from 'types';
+import {Channel, RelayDict} from 'types';
 import QRCode from 'react-qr-code';
 import { nip19 } from 'nostr-tools';
+import { getRelays } from 'local-storage';
 
 
 const Invite = (props: { channel: Channel }) => {
+    const [nevent, setNevent] = React.useState('');
+    const [url, setUrl] = React.useState('');
+
+    useEffect(() => {
+        getRelays().then((relayDict : RelayDict) => {
+            const eventID = channel.id;
+            let relayArray = relayDict ? Object.keys(relayDict) : [];
+            console.log('Got relays', relayArray);
+
+            relayArray = ['wss://nostream.breadslice.com', 'wss://relay.damus.io', 'wss://relay1.nostrchat.io']
+
+            const event = { id: eventID, kind: 40, relays: relayArray };
+
+            let groupNEvent = nip19.neventEncode(event);
+            console.log('Generated nevent', groupNEvent);
+            let groupUrl = `${window.location.protocol}//${window.location.host}/channel/${eventID}`;
+
+            setNevent(groupNEvent);
+            setUrl(groupUrl);
+        });
+    }, [])
+
     const {channel} = props;
     const [, showModal] = useModal();
     const [t] = useTranslation();
@@ -25,13 +48,7 @@ const Invite = (props: { channel: Channel }) => {
         showModal(null);
     };
 
-    const eventID = channel.id;
-    // Convert to bench 32 event id
-    //
-
-    const event = { id: eventID, kind: 40, relays: ['wss://nostream.breadslice.com', 'wss://relay.damus.io', 'wss://relay1.nostrchat.io'] };
-    const nevent = nip19.neventEncode(event);
-    const url = `${window.location.protocol}//${window.location.host}/channel/${nevent}`;
+    
 
     return (
         <>

@@ -765,7 +765,10 @@ class Raven extends TypedEventEmitter<RavenEvents, EventHandlerMap> {
         }
 
         const reactions: Reaction[] = this.eventQueue.filter(x => x.kind === kinds.Reaction).map(ev => {
-                const message = Raven.findNip10MarkerValue(ev, 'root');
+                const message = Raven.findTagValue(ev, 'e');
+                const kTag = Raven.findNip25MarkerValue(ev)
+                console.log('Reaction kTag', kTag, ev);
+
                 const peer = Raven.findTagValue(ev, 'p');
                 if (!message || !peer || !ev.content) return null;
                 return {
@@ -821,13 +824,18 @@ class Raven extends TypedEventEmitter<RavenEvents, EventHandlerMap> {
         return ev.tags.find(([t]) => t === tag)?.[1]
     }
 
-    static filterTagValue(ev: Event, tag: 'e' | 'p' | 'd') {
+    static filterTagValue(ev: Event, tag: 'e' | 'p' | 'd' | 'k' | 'h') {
         return ev.tags.filter(([t]) => t === tag)
     }
 
     static findNip10MarkerValue(ev: Event, marker: 'reply' | 'root' | 'mention') {
         const eTags = Raven.filterTagValue(ev, 'e');
         return eTags.find(x => x[3] == marker)?.[1];
+    }
+
+    static findNip25MarkerValue(ev: Event) {
+        const kTags = Raven.filterTagValue(ev, 'k');
+        return kTags.find(x => x[1] != null)?.[1];
     }
 }
 

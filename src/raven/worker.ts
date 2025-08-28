@@ -33,9 +33,9 @@ export class BgRaven {
                 filters,
                 {
                     onevent: (event: Event) => {
-                        if(event.kind === 40) {
-                            console.log('BgRaven.fetch got event', event);
-                        }
+                        // if(event.kind === 40) {
+                        //     console.log('BgRaven.fetch got event', event);
+                        // }
 
                         events.push(event);
                         // const seenSet = pool.seenOn.get(event.id);
