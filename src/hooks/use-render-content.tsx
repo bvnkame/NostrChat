@@ -11,7 +11,7 @@ import useModal from 'hooks/use-modal';
 import useStyles from 'hooks/use-styles';
 import ExternalLinkDialog from 'components/external-link-dialog';
 import ProfileDialog from 'views/components/dialogs/profile';
-import {Message} from 'types';
+import {Message, Profile} from 'types';
 import {profilesAtom} from 'atoms';
 import {notEmpty} from 'util/misc';
 
@@ -26,6 +26,8 @@ const useRenderContent = () => {
 
     return (message: Message) => {
         const {content} = message;
+
+        // console.log('Rendering message', message);
 
         const renderLink = (args: IntermediateRepresentation) => {
             const {href} = args.attributes;
@@ -71,11 +73,42 @@ const useRenderContent = () => {
         };
 
         const renderBlock = (c: string) => {
-            const {mentions} = message;
-            const mentionedProfiles = mentions.map(m => profiles.find(p => p.creator === m)).filter(notEmpty);
-            if (mentionedProfiles.length === 0) return c;
 
             let res: string | ReactNode[] = c;
+            const re = /nostr:(nprofile[0-9a-z]+)/g;
+            res = reactStringReplace(res, re, (match, i) => {
+                // return 'KKEEPME';
+                let np : nip19.NProfile = match.replace('nostr:', '') as nip19.NProfile;
+                let pub: string | null = null;
+                let profile: Profile | undefined = undefined;
+                try {
+                    pub = nip19.decode(np).data.pubkey;
+                    console.log('Decoded nprofile', np, pub);
+                    profile = profiles.find(p => p.creator === pub);
+                }
+                    catch (e) {
+                }
+                return <Link href='#' onClick={(e) => {
+                                    e.preventDefault();
+                        
+                                    if (pub) {
+                                        showModal({
+                                            body: <ProfileDialog profile={profile || undefined} pubkey={pub} onDM={() => {
+                                                navigate(`/dm/${nip19.npubEncode(pub!)}`).then();
+                                            }}/>,
+                                            maxWidth: 'xs',
+                                            hideOnBackdrop: true
+                                        });
+                                    }
+                                }} key={i}>{`@${profile?.name}`}</Link>
+
+            }) as ReactNode[];
+
+            // Render mentions
+            const {mentions} = message;
+            const mentionedProfiles = mentions.map(m => profiles.find(p => p.creator === m)).filter(notEmpty);
+            if (mentionedProfiles.length === 0) return res;
+
             mentionedProfiles.forEach(profile => {
                 res = reactStringReplace(res, `@${profile.name}`, (match, i) => {
                     return <Link href='#' onClick={(e) => {
@@ -90,6 +123,7 @@ const useRenderContent = () => {
                     }} key={i}>{match}</Link>
                 }) as ReactNode[];
             });
+                    
             return res;
         }
 

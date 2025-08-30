@@ -645,7 +645,7 @@ class Raven extends TypedEventEmitter<RavenEvents, EventHandlerMap> {
                 if(isReplyTo) {
                     mentions = [isReplyTo];
                     root = isReplyTo;
-                    console.log('Is reply and mentions', mentions);
+                    console.log('Is reply and mentions', ev);
                 }
 
                 if (!root) return null;

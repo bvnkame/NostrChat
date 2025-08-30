@@ -15,9 +15,13 @@ export class BgRaven {
     private getPool = (): SimplePool => {
         if (Date.now() - this.poolCreated > 120000) {
             // renew pool every two minutes
-            this.pool.close(this.relays);
+            try {
+                this.pool.close(this.relays);
+            }
+            catch (e) {
+            }
 
-            this.pool = new SimplePool({enablePing: false});
+            this.pool = new SimplePool();
             this.poolCreated = Date.now();
         }
 
